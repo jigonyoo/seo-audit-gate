@@ -3,6 +3,28 @@ sys.path.insert(0, os.path.dirname(__file__))
 import crawl, audit
 
 def main():
+    if len(sys.argv) > 1:
+        import argparse
+        import json
+        from pathlib import Path
+        import directory_audit
+        parser = argparse.ArgumentParser(description='Offline static site SEO audit')
+        commands = parser.add_subparsers(dest='command', required=True)
+        directory = commands.add_parser('audit-dir')
+        directory.add_argument('folder')
+        directory.add_argument('--out', default=os.environ.get('OUT', 'out'))
+        args = parser.parse_args()
+        try:
+            report = directory_audit.run(args.folder)
+            output = Path(args.out)
+            output.mkdir(parents=True, exist_ok=True)
+            (output / 'audit.json').write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+            (output / 'audit.md').write_text(directory_audit.markdown(report), encoding='utf-8')
+        except (OSError, ValueError) as exc:
+            parser.error(str(exc))
+        print(f"audited {report['page_count']} pages; {report['finding_count']} findings")
+        print(f'wrote {output}/audit.json and {output}/audit.md')
+        return
     site = os.environ.get("SITE", "fixtures/site")
     smap = os.environ.get("SITEMAP", "fixtures/sitemap.xml")
     out = os.environ.get("OUT", "out")

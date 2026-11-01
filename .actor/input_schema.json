@@ -1,0 +1,12 @@
+{
+  "title": "Static SEO audit input",
+  "type": "object",
+  "schemaVersion": 1,
+  "properties": {
+    "startUrl": {"title": "Starting URL", "type": "string", "editor": "textfield", "description": "One HTTP(S) URL without credentials. Query variants share one snapshot path."},
+    "maxPages": {"title": "Maximum HTML pages", "type": "integer", "default": 20, "minimum": 1, "maximum": 200},
+    "requestIntervalMillis": {"title": "Minimum per-domain request interval (ms)", "type": "integer", "default": 1000, "minimum": 0, "maximum": 60000},
+    "userAgent": {"title": "User agent", "type": "string", "editor": "textfield", "default": "SeoAuditGate"}
+  },
+  "required": ["startUrl"]
+}

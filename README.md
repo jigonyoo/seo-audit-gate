@@ -7,8 +7,63 @@ Runs offline against a local site. Python standard library only, no network, no 
 
 ```
 make demo    # audits the fixture site
-make test    # 14 tests
+make test    # offline regression and directory-audit tests
 ```
+
+## Audit a static site folder
+
+Requires Python 3.10 or newer. No additional packages are needed.
+
+```sh
+python3 src/cli.py audit-dir ./public --out ./reports
+```
+
+Writes `reports/audit.json` and `reports/audit.md`. Both reports include the HTML
+page count, issue counts by type, page metadata (including hreflang and JSON-LD
+types), and graded findings with evidence and suggested fixes. Without arguments,
+the original `make demo` audit still works with its original rules.
+
+The directory audit recursively parses `.html` and `.htm` using `html.parser`.
+It checks title presence/length, description, canonical, `og:title`,
+`og:description`, `og:image`, `og:url`, `twitter:card`, JSON-LD presence/JSON
+syntax/`@type` (including arrays and `@graph`), one H1, and `html lang`.
+Hreflang is inventoried and, when declared, checked for empty language/URL and
+broken local targets. Its absence is allowed for a single-language site.
+
+Internal anchor/area links resolve relative to each page and its optional HTML
+`base`. Root-relative URLs, percent escapes, query strings, fragments, and
+directory `index.html` are supported. Absolute URLs use the page's absolute
+canonical origin to distinguish local targets from external links. Without a
+declared origin, absolute HTTP URLs cannot be classified as internal. External
+URLs and non-HTTP schemes are never fetched. Targets outside the folder (including
+symlinks) are rejected. The audit checks file existence, not fragment IDs or
+hosting rewrite rules: `/about` needs an actual file or `about/index.html`;
+it does not implicitly resolve to `about.html`.
+
+Site checks require `robots.txt`, `404.html`, and a valid `sitemap.xml` URL set
+covering every HTML file, including `404.html`. A sitemap index and remote child
+sitemaps are not expanded. Coverage is inferred by resolving sitemap URL paths
+to local files. Local checks cannot establish deployed responses, schema
+vocabulary validity, indexing, or ranking effects.
+
+### Measured fixture detection
+
+`tests/fixtures/site_defects/` plants the issues below; the clean counterpart is
+`tests/fixtures/site_clean/`. The table is computed by `measured_table()` in
+`tests/test_directory_audit.py`; `make test` verifies README matches the computed
+table and prints it. These rates describe only these synthetic planted cases.
+
+| Planted issue | Planted | Detected | Rate |
+|---|---:|---:|---:|
+| `robots.txt.missing` | 1 | 1 | 100% |
+| `sitemap.xml.missing` | 1 | 1 | 100% |
+| `canonical.missing` | 1 | 1 | 100% |
+| `description.missing` | 1 | 1 | 100% |
+| `og:image.missing` | 1 | 1 | 100% |
+| `jsonld.missing` | 1 | 1 | 100% |
+| `links.broken` | 1 | 1 | 100% |
+| `h1.multiple` | 1 | 1 | 100% |
+| Total | 8 | 8 | 100% |
 
 ## The measured run
 
